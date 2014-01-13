@@ -38,7 +38,7 @@
 include wget
 
 class graylog::web_interface($server_version = '0.20.0-preview.7') {
-  wget::fetch{ 'fetch graylog_server':
+  wget::fetch{ 'fetch graylog-web-interface':
     source      => "https://github.com/Graylog2/graylog2-web-interface/releases/download/${server_version}/graylog2-web-interface-${server_version}.tgz",
     destination => '/tmp/graylog2-web-interface.tgz',
     timeout     => 0,

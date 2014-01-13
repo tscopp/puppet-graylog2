@@ -78,12 +78,14 @@ class graylog::server($version         = '0.20.0-preview.7',
     destination => "/tmp/elasticsearch-${es_version}.deb",
     timeout     => 0,
     verbose     => true,
+    notify      => Exec['expand_graylog2'],
     before      => Class['elasticsearch'],
   }
   exec{'expand_graylog2':
     command     => 'tar xvzf /tmp/graylog2-server.tgz -C /tmp/',
     path        => '/usr/local/bin/:/bin/',
     refreshonly => true,
+    notify      => Exec['mv_graylog'],
     creates     => "/tmp/graylog2-server-${version}",
   }
   exec{'mv_graylog':
@@ -108,16 +110,18 @@ class graylog::server($version         = '0.20.0-preview.7',
   exec{'add_graylog_user':
     command     => "mongo graylog2 --eval \"db.addUser(\'${mongo_user}\',\'${mongo_pw}\')\" ",
     path        => '/usr/local/bin/:/usr/bin/:/bin/',
-    subscribe   => File['/etc/mongodb.conf'],
-    refreshonly => true,
+    subscribe   => [File['/etc/mongodb.conf'],
+                    File['/etc/graylog2.conf']],
+                    #refreshonly => true,
     require     => [Class['mongodb'],
-                  File['/etc/mongodb.conf']],
+                    File['/etc/mongodb.conf']],
   }
   exec{'auth_graylog_user':
     command     => "mongo graylog2 --eval \"db.auth(\'${mongo_user}\',\'${mongo_pw}\')\" ",
     path        => '/usr/local/bin/:/usr/bin/:/bin/',
-    subscribe   => File['/etc/mongodb.conf'],
-    refreshonly => true,
+    subscribe   => [File['/etc/mongodb.conf'],
+                    File['/etc/graylog2.conf']],
+                    #refreshonly => true,
     require     => [Class['mongodb'],
                   File['/etc/mongodb.conf'],
                   Exec['add_graylog_user']],
