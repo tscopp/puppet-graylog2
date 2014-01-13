@@ -57,6 +57,12 @@ class graylog::server($version     = '0.20.0-preview.7',
   $url = "https://github.com/Graylog2/graylog2-server/releases/download/${version}/${pgkname}.tgz"
   $pw_secret = 'liVZUzBSUeHZ0Wt5MfyNaF0VRRdlrWdABopxrJjaQbfcLMsKMCYH279KZhJdArKqlsx2a0enGavoZndof81q'
 
+  $graylog_preqs= ["git", "apache2", "libcurl4-openssl-dev", "apache2-prefork-dev", "libapr1-dev", "build-essential", "openssl", "libreadline6", "libreadline6-dev", "curl", "git-core", "zlib1g", "zlib1g-dev", "libssl-dev", "libyaml-dev", "libsqlite3-dev", "sqlite3", "libxml2-dev", "libxslt-dev", "autoconf", "libc6-dev", "ncurses-dev", "automake", "libtool", "bison", "subversion", "pkg-config", "python-software-properties", "software-properties-common", "openjdk-7-jre"]
+
+  package{ $graylog_preqs:
+    ensure => present,
+  }
+
   # Graylog2 Stuff
   wget::fetch{ 'fetch graylog_server':
     source      => $url,
@@ -89,9 +95,19 @@ class graylog::server($version     = '0.20.0-preview.7',
     notify  => Service['mongodb'],
   }
   exec{'add_graylog_user':
-    command => "mongo 127.0.0.1 --eval \'db.addUser({user:\"${mongo_user}\",pwd: \"${mongo_pw}\",roles: [ \"readWrite\", \"dbAdmin\"]})\'",
+    command => "mongo graylog2 --eval \"db.addUser(\'${mongo_user}\',\'${mongo_pw}\')\" ",
     path    => '/usr/local/bin/:/usr/bin/:/bin/',
+    require => [Class['mongodb'],
+                File['/etc/mongodb.conf']],
   }
+  exec{'auth_graylog_user':
+    command => "mongo graylog2 --eval \"db.auth(\'${mongo_user}\',\'${mongo_pw}\')\" ",
+    path    => '/usr/local/bin/:/usr/bin/:/bin/',
+    require => [Class['mongodb'],
+                File['/etc/mongodb.conf'],
+                Exec['add_graylog_user']],
+  }
+
 
 
 }
