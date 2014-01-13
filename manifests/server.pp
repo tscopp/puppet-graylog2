@@ -79,10 +79,6 @@ class graylog::server($version         = '0.20.0-preview.7',
     verbose     => true,
     before      => Class['elasticsearch'],
   }
-
-
-
-
   exec{'expand_graylog2':
     command => 'tar xvzf /tmp/graylog2-server.tgz -C /tmp/',
     path    => '/usr/local/bin/:/bin/',
@@ -127,6 +123,18 @@ class graylog::server($version         = '0.20.0-preview.7',
         'name'  => $es_cluster_name,
       }
     }
+  }
+
+  file{'/etc/init/graylog2-server.conf':
+    content => template('graylog/graylog2-server.conf.erb'),
+    notify  => Service['graylog2-server'],
+    require => [Exec['auth_graylog_user'],
+                Class['elasticsearch']],
+  }
+
+  service { 'graylog2-server':
+    ensure  => 'running',
+    require => File['/etc/graylog2.conf'],
   }
 
 }
