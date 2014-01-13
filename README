@@ -10,3 +10,6 @@ Contact
 -------
 scoppettat@gmail.com
 
+Gotchas
+-------
+Managing packages (and more specifically ensuring that the apt repo you're using is up to date) is outside the scope of this module. So if you end up not being able to install any of the prereqs... that's probably why.
