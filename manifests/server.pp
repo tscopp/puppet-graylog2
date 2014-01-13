@@ -37,20 +37,21 @@
 #
 
 
-class graylog::server($version     = '0.20.0-preview.7',
-                      $path        = '/opt/graylog2/',
-                      $is_master   = True,
-                      $rest_uri    = 'http://127.0.0.1:12900/',
-                      $es_maxdocs  = '20000000',
-                      $es_prefix   = 'graylog2',
-                      $es_maxind   = '20',
-                      $es_shards   = '4',
-                      $es_replicas = '0',
-                      $mongo_user  = 'grayloguser',
-                      $mongo_pw    = '123',
-                      $mongo_host  = '127.0.0.1',
-                      $mongo_db    = 'graylog2',
-                      $mongo_port  = '27017',
+class graylog::server($version         = '0.20.0-preview.7',
+                      $path            = '/opt/graylog2/',
+                      $is_master       = True,
+                      $rest_uri        = 'http://127.0.0.1:12900/',
+                      $es_cluster_name = 'graylog2',
+                      $es_maxdocs      = '20000000',
+                      $es_prefix       = 'graylog2',
+                      $es_maxind       = '20',
+                      $es_shards       = '4',
+                      $es_replicas     = '0',
+                      $mongo_user      = 'grayloguser',
+                      $mongo_pw        = '123',
+                      $mongo_host      = '127.0.0.1',
+                      $mongo_db        = 'graylog2',
+                      $mongo_port      = '27017',
                       )
                       {
   $pgkname = "graylog2-server-${version}"
@@ -71,6 +72,17 @@ class graylog::server($version     = '0.20.0-preview.7',
     verbose     => true,
     before      => Exec['expand_graylog2'],
   }
+  wget::fetch{ 'fetch_elasticsearch':
+    source      => 'https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.9.deb',
+    destination => '/tmp/elasticsearch-0.90.9.deb',
+    timeout     => 0,
+    verbose     => true,
+    before      => Class['elasticsearch'],
+  }
+
+
+
+
   exec{'expand_graylog2':
     command => 'tar xvzf /tmp/graylog2-server.tgz -C /tmp/',
     path    => '/usr/local/bin/:/bin/',
@@ -108,6 +120,13 @@ class graylog::server($version     = '0.20.0-preview.7',
                 Exec['add_graylog_user']],
   }
 
-
+  class { 'elasticsearch':
+    pkg_source  => '/tmp/elasticsearch-0.90.9.deb',
+    config      => {
+      'cluster' => {
+        'name'  => $es_cluster_name,
+      }
+    }
+  }
 
 }
