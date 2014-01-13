@@ -1,16 +1,12 @@
-graylog
-
-This is the graylog module.
+tscopp-graylog2
+===================
+This module will (supposedly) install graylog2 for you.
 
 License
 -------
-
+Apache License, Version 2.0
 
 Contact
 -------
+scoppettat@gmail.com
 
-
-Support
--------
-
-Please log tickets and issues at our [Projects site](http://projects.example.com)
