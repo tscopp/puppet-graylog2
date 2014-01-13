@@ -37,17 +37,10 @@
 #
 include wget
 
-class graylog($server_version = '0.20.0-preview.7') {
+class graylog::web_interface($server_version = '0.20.0-preview.7') {
   wget::fetch{ 'fetch graylog_server':
-    source      => "https://github.com/Graylog2/graylog2-server/releases/download/${server_version}/graylog2-server-${server_version}.tgz",
-    destination => '/tmp/graylog2_server.tgz',
-    timeout     => 0,
-    verbose     => true,
-  }
-
-  wget::fetch{ 'fetch graylog_web':
-    source      => "https://github.com/Graylog2/graylog2-server/releases/download/${server_version}/graylog2-web-interface-${server_version}.tgz",
-    destination => '/tmp/graylog2_server.tgz',
+    source      => "https://github.com/Graylog2/graylog2-web-interface/releases/download/${server_version}/graylog2-web-interface-${server_version}.tgz",
+    destination => '/tmp/graylog2-web-interface.tgz',
     timeout     => 0,
     verbose     => true,
   }

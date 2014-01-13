@@ -42,6 +42,7 @@ class graylog::server($version         = '0.20.0-preview.7',
                       $is_master       = True,
                       $rest_uri        = 'http://127.0.0.1:12900/',
                       $es_cluster_name = 'graylog2',
+                      $es_version      = '0.90.7',
                       $es_maxdocs      = '20000000',
                       $es_prefix       = 'graylog2',
                       $es_maxind       = '20',
@@ -58,7 +59,7 @@ class graylog::server($version         = '0.20.0-preview.7',
   $url = "https://github.com/Graylog2/graylog2-server/releases/download/${version}/${pgkname}.tgz"
   $pw_secret = 'liVZUzBSUeHZ0Wt5MfyNaF0VRRdlrWdABopxrJjaQbfcLMsKMCYH279KZhJdArKqlsx2a0enGavoZndof81q'
 
-  $graylog_preqs= ["git", "apache2", "libcurl4-openssl-dev", "apache2-prefork-dev", "libapr1-dev", "build-essential", "openssl", "libreadline6", "libreadline6-dev", "curl", "git-core", "zlib1g", "zlib1g-dev", "libssl-dev", "libyaml-dev", "libsqlite3-dev", "sqlite3", "libxml2-dev", "libxslt-dev", "autoconf", "libc6-dev", "ncurses-dev", "automake", "libtool", "bison", "subversion", "pkg-config", "python-software-properties", "software-properties-common", "openjdk-7-jre"]
+  $graylog_preqs= ["git", "apache2", "libcurl4-openssl-dev", "apache2-prefork-dev", "libapr1-dev", "build-essential", "openssl", "libreadline6", "libreadline6-dev", "curl", "git-core", "zlib1g", "zlib1g-dev", "libssl-dev", "libyaml-dev", "libsqlite3-dev", "sqlite3", "libxml2-dev", "autoconf", "libc6-dev", "automake", "libtool", "bison", "subversion", "pkg-config", "python-software-properties", "software-properties-common", "openjdk-7-jre"]
 
   package{ $graylog_preqs:
     ensure => present,
@@ -73,22 +74,24 @@ class graylog::server($version         = '0.20.0-preview.7',
     before      => Exec['expand_graylog2'],
   }
   wget::fetch{ 'fetch_elasticsearch':
-    source      => 'https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-0.90.9.deb',
-    destination => '/tmp/elasticsearch-0.90.9.deb',
+    source      => "https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-${es_version}.deb",
+    destination => "/tmp/elasticsearch-${es_version}.deb",
     timeout     => 0,
     verbose     => true,
     before      => Class['elasticsearch'],
   }
   exec{'expand_graylog2':
-    command => 'tar xvzf /tmp/graylog2-server.tgz -C /tmp/',
-    path    => '/usr/local/bin/:/bin/',
-    creates => "/tmp/graylog2-server-${version}",
+    command     => 'tar xvzf /tmp/graylog2-server.tgz -C /tmp/',
+    path        => '/usr/local/bin/:/bin/',
+    refreshonly => true,
+    creates     => "/tmp/graylog2-server-${version}",
   }
   exec{'mv_graylog':
-    command   => "mv /tmp/graylog2-server-${version} /opt/graylog2/",
-    path      => '/usr/local/bin/:/bin/',
-    creates   => '/opt/graylog2',
-    require   => Exec['expand_graylog2'],
+    command     => "mv /tmp/graylog2-server-${version} /opt/graylog2/",
+    path        => '/usr/local/bin/:/bin/',
+    creates     => '/opt/graylog2',
+    refreshonly => true,
+    require     => Exec['expand_graylog2'],
     }
   file{'/etc/graylog2.conf':
     content => template('graylog/graylog2.conf.erb'),
@@ -103,21 +106,25 @@ class graylog::server($version         = '0.20.0-preview.7',
     notify  => Service['mongodb'],
   }
   exec{'add_graylog_user':
-    command => "mongo graylog2 --eval \"db.addUser(\'${mongo_user}\',\'${mongo_pw}\')\" ",
-    path    => '/usr/local/bin/:/usr/bin/:/bin/',
-    require => [Class['mongodb'],
-                File['/etc/mongodb.conf']],
+    command     => "mongo graylog2 --eval \"db.addUser(\'${mongo_user}\',\'${mongo_pw}\')\" ",
+    path        => '/usr/local/bin/:/usr/bin/:/bin/',
+    subscribe   => File['/etc/mongodb.conf'],
+    refreshonly => true,
+    require     => [Class['mongodb'],
+                  File['/etc/mongodb.conf']],
   }
   exec{'auth_graylog_user':
-    command => "mongo graylog2 --eval \"db.auth(\'${mongo_user}\',\'${mongo_pw}\')\" ",
-    path    => '/usr/local/bin/:/usr/bin/:/bin/',
-    require => [Class['mongodb'],
-                File['/etc/mongodb.conf'],
-                Exec['add_graylog_user']],
+    command     => "mongo graylog2 --eval \"db.auth(\'${mongo_user}\',\'${mongo_pw}\')\" ",
+    path        => '/usr/local/bin/:/usr/bin/:/bin/',
+    subscribe   => File['/etc/mongodb.conf'],
+    refreshonly => true,
+    require     => [Class['mongodb'],
+                  File['/etc/mongodb.conf'],
+                  Exec['add_graylog_user']],
   }
 
   class { 'elasticsearch':
-    pkg_source  => '/tmp/elasticsearch-0.90.9.deb',
+    pkg_source  => "/tmp/elasticsearch-${es_version}.deb",
     config      => {
       'cluster' => {
         'name'  => $es_cluster_name,
