@@ -39,8 +39,8 @@
 
 class graylog::server($version         = '0.20.0-preview.7',
                       $path            = '/opt/graylog2/',
-                      $is_master       = True,
                       $rest_uri        = 'http://127.0.0.1:12900/',
+                      $is_master       = True,
                       $es_cluster_name = 'graylog2',
                       $es_version      = '0.90.7',
                       $es_maxdocs      = '20000000',

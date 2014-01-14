@@ -37,11 +37,45 @@
 #
 include wget
 
-class graylog::web_interface($server_version = '0.20.0-preview.7') {
+class graylog::web_interface($version          = '0.20.0-preview.7',
+                              $web_secret      = 'superdupersecret',
+                              $rest_uri        = 'http://127.0.0.1:12900/',
+                              $graylog_web_uri = 'http://127.0.0.1:80/',) {
   wget::fetch{ 'fetch graylog-web-interface':
-    source      => "https://github.com/Graylog2/graylog2-web-interface/releases/download/${server_version}/graylog2-web-interface-${server_version}.tgz",
+    source      => "https://github.com/Graylog2/graylog2-web-interface/releases/download/${version}/graylog2-web-interface-${version}.tgz",
     destination => '/tmp/graylog2-web-interface.tgz',
+    notify      => Exec['expand_graylog2_web'],
     timeout     => 0,
     verbose     => true,
   }
+  exec{'expand_graylog2_web':
+    command     => 'tar xvzf /tmp/graylog2-web-interface.tgz -C /tmp/',
+    path        => '/usr/local/bin/:/bin/',
+    refreshonly => true,
+    notify      => Exec['mv_graylog2_web'],
+    creates     => "/tmp/graylog2-web-interface-${version}",
+  }
+  exec{'mv_graylog2_web':
+    command     => "mv /tmp/graylog2-web-interface-${version} /opt/graylog2-web/",
+    path        => '/usr/local/bin/:/bin/',
+    creates     => '/opt/graylog2-web',
+    refreshonly => true,
+    require     => Exec['expand_graylog2_web'],
+  }
+  package{['libgdbm-dev', 'libffi-dev', 'ruby1.9.3']:
+    ensure => present,
+  }
+  file{'/etc/graylog2-web-interface.conf':
+    content => template('graylog/graylog2-web-interface.conf.erb'),
+  }
+  file{'/opt/graylog2-web/conf/graylog2-web-interface.conf':
+    ensure  => 'link',
+    target  => '/etc/graylog2-web-interface.conf',
+    require => File['/etc/graylog2-web-interface.conf'],
+  }
+  exec{'/opt/graylog2-web/bin/graylog2-web-interface':
+    command => '/opt/graylog2-web/bin/graylog2-web-interface',
+    path    => '/opt/graylog2-web/bin/:/usr/local/bin/:/bin/',
+  }
 }
+
