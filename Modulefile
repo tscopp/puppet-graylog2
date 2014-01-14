@@ -13,4 +13,5 @@ project_page 'UNKNOWN'
 dependency 'ispavailability/elasticsearch', '>= 0.1.3'
 dependency 'maestrodev/wget', '>= 1.2.0'
 dependency 'puppetlabs/stdlib', '>=4.1.0'
+dependency 'dhoppe/monit', '>=0.0.21'
 
